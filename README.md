@@ -215,8 +215,13 @@ inside the activated environment when inspecting packages.
 
 Use `DRY_RUN=1` with either shell script and `--dry-run` with the dataset
 script to print the complete plan without downloading or compressing. The model
-script writes `/data/outputs/llmcbench_edge_4090/edge_4090_prepared_models.json`;
+script writes `.llmcbench/outputs/llmcbench_edge_4090/edge_4090_prepared_models.json`;
 use that config for matrix evaluation after all asset checks pass.
+
+All bootstrap artifacts default to the repository-local `.llmcbench/`
+directory: the Python venv, base and compressed models, Hugging Face cache,
+dataset snapshots, prompts, calibration inputs, reports and final outputs. Set
+`LLMCBENCH_ROOT` only when an explicit external data disk is desired.
 
 The aligned weight-only profile is W4 group 128 for GPTQ, AWQ and OmniQuant on
 both base models. SmoothQuant remains W8A8 on both models because W8A8 is the

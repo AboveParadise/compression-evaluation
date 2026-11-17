@@ -4,9 +4,14 @@ set -euo pipefail
 # Install the reproducible single-RTX-4090 LLMCBench runtime and verify the
 # requested Python/PyTorch/CUDA/cuDNN/bitsandbytes/Transformers stack.
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+RUNTIME_ROOT="${LLMCBENCH_ROOT:-${PROJECT_ROOT}/.llmcbench}"
+cd "${PROJECT_ROOT}"
+
 ENV_NAME="${ENV_NAME:-llmcbench-edge}"
 PYTHON_VERSION="${PYTHON_VERSION:-3.10}"
-VENV_DIR="${VENV_DIR:-.venv-llmcbench-4090}"
+VENV_DIR="${VENV_DIR:-${RUNTIME_ROOT}/venv}"
 PYTORCH_INDEX_URL="${PYTORCH_INDEX_URL:-https://download.pytorch.org/whl/cu124}"
 PYTORCH_PACKAGES="${PYTORCH_PACKAGES:-torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0}"
 MODELSCOPE_PACKAGE="${MODELSCOPE_PACKAGE:-modelscope>=1.20,<2}"
@@ -17,7 +22,7 @@ MIN_GPU_MEMORY_GB="${MIN_GPU_MEMORY_GB:-23}"
 ALLOW_NON_4090="${ALLOW_NON_4090:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 VERIFY_ONLY="${VERIFY_ONLY:-0}"
-REPORT_OUTPUT="${REPORT_OUTPUT:-/data/outputs/llmcbench_edge_4090/edge_env_report.json}"
+REPORT_OUTPUT="${REPORT_OUTPUT:-${RUNTIME_ROOT}/outputs/llmcbench_edge_4090/edge_env_report.json}"
 
 export CUDA_VISIBLE_DEVICES
 

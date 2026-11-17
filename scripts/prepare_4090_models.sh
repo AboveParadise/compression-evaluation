@@ -6,14 +6,21 @@ set -euo pipefail
 # same-base checkpoint is available; otherwise the checkpoint is generated
 # locally from the downloaded base model.
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+RUNTIME_ROOT="${LLMCBENCH_ROOT:-${PROJECT_ROOT}/.llmcbench}"
+cd "${PROJECT_ROOT}"
+
 PYTHON_BIN="${PYTHON_BIN:-python3}"
-MODEL_ROOT="${MODEL_ROOT:-/data/models}"
+MODEL_ROOT="${MODEL_ROOT:-${RUNTIME_ROOT}/models}"
 COMPRESSED_ROOT="${COMPRESSED_ROOT:-${MODEL_ROOT}/precompressed}"
-HF_CACHE_DIR="${HF_CACHE_DIR:-/data/hf_cache}"
-DATASET_CACHE="${DATASET_CACHE:-/data/llm_eval_datasets}"
+HF_CACHE_DIR="${HF_CACHE_DIR:-${RUNTIME_ROOT}/hf_cache}"
+DATASET_CACHE="${DATASET_CACHE:-${RUNTIME_ROOT}/datasets}"
 HF_ENDPOINT="${HF_ENDPOINT:-https://hf-mirror.com}"
-OUTPUT_ROOT="${OUTPUT_ROOT:-/data/outputs/llmcbench_edge_4090}"
+OUTPUT_ROOT="${OUTPUT_ROOT:-${RUNTIME_ROOT}/outputs/llmcbench_edge_4090}"
 OUTPUT_CONFIG="${OUTPUT_CONFIG:-${OUTPUT_ROOT}/edge_4090_prepared_models.json}"
+CALIBRATION_FILE="${CALIBRATION_FILE:-${RUNTIME_ROOT}/calibration/wiki_samples.txt}"
+PROMPT_FILE="${PROMPT_FILE:-${RUNTIME_ROOT}/prompts/edge_prompts.txt}"
 CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 MAX_MEMORY="${MAX_MEMORY:-0:22GiB,cpu:120GiB}"
 MIN_FREE_GPU_MEMORY_GB="${MIN_FREE_GPU_MEMORY_GB:-20}"
@@ -347,6 +354,7 @@ write_matrix_config() {
   mkdir -p "$(dirname "${OUTPUT_CONFIG}")"
   "${PYTHON_BIN}" - \
     configs/edge_4090_matrix.json "${OUTPUT_CONFIG}" "${OUTPUT_ROOT}" \
+    "${HF_CACHE_DIR}" "${DATASET_CACHE}" "${CALIBRATION_FILE}" "${PROMPT_FILE}" \
     "${LLAMA_BASE}" "${QWEN_BASE}" \
     "${CHECKPOINTS[LLaMA3-8B/wanda]}" "${CHECKPOINTS[LLaMA3-8B/sparsegpt]}" \
     "${CHECKPOINTS[LLaMA3-8B/gptq]}" "${CHECKPOINTS[LLaMA3-8B/awq]}" \
@@ -358,7 +366,7 @@ import json
 import sys
 from pathlib import Path
 
-template, output, output_root, llama_base, qwen_base, *paths = sys.argv[1:]
+template, output, output_root, hf_cache, data_cache, calibration_file, prompt_file, llama_base, qwen_base, *paths = sys.argv[1:]
 payload = json.loads(Path(template).read_text(encoding="utf-8"))
 payload["models"] = [
     {"name": "LLaMA3-8B", "path": llama_base},
@@ -371,6 +379,11 @@ payload["precompressed_paths"] = {
 }
 payload["defaults"]["output_root"] = output_root
 payload["defaults"]["cuda_visible_devices"] = "0"
+payload["defaults"]["hf_cache_dir"] = hf_cache
+payload["defaults"]["data_dir"] = data_cache
+payload["defaults"]["calibration_dataset_cache"] = data_cache
+payload["defaults"]["calibration_file"] = calibration_file
+payload["defaults"]["prompt_file"] = prompt_file
 payload["defaults"]["quant_bits"] = 4
 payload["defaults"]["group_size"] = 128
 payload.setdefault("method_overrides", {}).setdefault("smoothquant", {})["quant_bits"] = 8
@@ -427,7 +440,7 @@ print("Quantization alignment verified: GPTQ/AWQ/OmniQuant=W4G128; SmoothQuant=W
 PY
 }
 
-mkdir -p "${MODEL_ROOT}" "${COMPRESSED_ROOT}" "${HF_CACHE_DIR}" "${DATASET_CACHE}"
+mkdir -p "${MODEL_ROOT}" "${COMPRESSED_ROOT}" "${HF_CACHE_DIR}" "${DATASET_CACHE}" "$(dirname "${CALIBRATION_FILE}")" "$(dirname "${PROMPT_FILE}")"
 
 if [[ "${VERIFY_ONLY}" != "1" ]]; then
   download_modelscope "${LLAMA_BASE_REPO}" "${LLAMA_BASE_REVISION}" "${LLAMA_BASE}"
@@ -449,6 +462,12 @@ if [[ "${VERIFY_ONLY}" != "1" ]]; then
 fi
 
 write_matrix_config
+if [[ "${DRY_RUN}" != "1" ]]; then
+  "${PYTHON_BIN}" tools/prepare_target_paths.py \
+    --config "${OUTPUT_CONFIG}" \
+    --output "${OUTPUT_ROOT}/edge_target_paths_report.json" \
+    --fail-on-error
+fi
 verify_all
 
 echo "Prepared model config: ${OUTPUT_CONFIG}"

@@ -11,6 +11,10 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+RUNTIME_ROOT = Path(os.environ.get("LLMCBENCH_ROOT", PROJECT_ROOT / ".llmcbench")).expanduser()
+
+
 MMLU_CONFIGS = [
     "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge",
     "college_biology", "college_chemistry", "college_computer_science", "college_mathematics",
@@ -127,9 +131,9 @@ def _load_all(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cache-dir", default="/data/llm_eval_datasets")
+    parser.add_argument("--cache-dir", default=str(RUNTIME_ROOT / "datasets"))
     parser.add_argument("--hf-endpoint", default="https://hf-mirror.com")
-    parser.add_argument("--manifest", default="/data/llm_eval_datasets/llmcbench_datasets.json")
+    parser.add_argument("--manifest", default=str(RUNTIME_ROOT / "datasets" / "llmcbench_datasets.json"))
     parser.add_argument("--snapshot-root", default="")
     parser.add_argument("--retries", type=int, default=8)
     parser.add_argument("--retry-delay", type=float, default=30.0)
