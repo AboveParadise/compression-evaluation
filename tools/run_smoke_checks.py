@@ -2267,11 +2267,10 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 "assert 'scripts/init_edge_storage.sh' in text; "
                 "assert 'tools/export_edge_portable_bundle.py' in readme; "
                 "assert 'tools/verify_edge_portable_bundle.py' in readme; "
-                "assert 'scripts/init_edge_storage.sh' in readme; "
-                "assert 'sudo DATA_ROOT=/data bash scripts/init_edge_storage.sh' in readme; "
-                "assert '--archive /tmp/llmcbench_edge_portable.tar.gz' in readme; "
+                "assert '### 10.1 可选：导出代码便携包' in readme; "
+                "assert '--archive .llmcbench/portable/llmcbench_edge_portable.tar.gz' in readme; "
                 "assert '--require-clean-code' in readme; "
-                "assert '--require-commit $(git rev-parse HEAD)' in readme; "
+                "assert '--require-commit \"$(git rev-parse HEAD)\"' in readme; "
                 "assert 'scripts/init_edge_storage.sh' in Path('tools/verify_edge_portable_bundle.py').read_text(); "
                 "assert 'tools/build_edge_handoff_manifest.py' in Path('tools/verify_edge_portable_bundle.py').read_text(); "
                 "assert 'tools/build_goal_audit.py' in Path('tools/verify_edge_portable_bundle.py').read_text(); "
@@ -2282,13 +2281,6 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 "assert 'tools/validate_edge_results.py' in Path('tools/verify_edge_portable_bundle.py').read_text(); "
                 "assert 'require_clean_code' in Path('tools/verify_edge_portable_bundle.py').read_text(); "
                 "assert 'require_commit' in Path('tools/verify_edge_portable_bundle.py').read_text(); "
-                "assert 'tools/plan_edge_matrix_resume.py' in readme; "
-                "assert 'tools/verify_edge_results_bundle.py' in readme; "
-                "assert 'tools/verify_edge_delivery.py' in readme; "
-                "assert '`tools/verify_edge_results_bundle.py`' in readme; "
-                "assert '`tools/verify_edge_delivery.py`' in readme; "
-                "assert '--results-archive /data/outputs/llmcbench_edge_4090/edge_results_bundle.tar.gz' in readme; "
-                "assert 'root/bundle/archive delivery consistency' in readme; "
                 "assert 'llmcbench_edge_portable.tar.gz' in readme; "
                 "assert 'portable_bundle' in goal and 'tools/export_edge_portable_bundle.py' in goal; "
                 "assert 'portable_bundle_verify' in goal and 'tools/verify_edge_portable_bundle.py' in goal; "
@@ -2304,25 +2296,10 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 "readme=Path('README.md').read_text(); "
                 "audit=Path('docs/COMPLETION_AUDIT.md').read_text(); "
                 "status=Path('docs/RUN_STATUS.md').read_text(); "
-                "assert 'edge_results_bundle.tar.gz' in readme; assert 'target path preparation report' in readme; assert 'current-goal audit when present' in readme; "
-                "assert 'stale tarballs are rejected' in readme; "
-                "assert 'results_bundle_verify_ok' in readme; "
-                "assert 'results_bundle_verify_complete' in readme; "
-                "assert 'delivery_verify_ok' in readme; "
-                "assert 'delivery_verify_substatus_ok' in readme; "
-                "assert 'target_completion_ok' in readme; "
-                "assert 'method-specific allowed compression backend provenance' in readme; "
-                "assert 'compression_materialized` and `compression_uses_precompressed` booleans' in readme; "
-                "assert 'compression_external_command` with `compression_external_returncode=0' in readme; "
-                "assert 'validator.ok=true' in readme; "
-                "assert 'has `ok=true` with `validator.ok=true`' in readme; "
-                "assert 'target readiness has `ok=true`' in readme; "
-                "assert '`completion_ok=true`' in readme; "
-                "assert 'no `before_matrix_blockers`' in readme; "
-                "assert 'With `--require-target-readiness-ok`' in readme; "
-                "assert 'root `completion_audit.json`' in readme; "
-                "assert 'edge_results_bundle_verify.json' in readme; "
-                "assert '`\"ok\": true` and `\"complete\": true`' in readme; "
+                "required=['edge_target_paths_report.json','edge_results_bundle.tar.gz','edge_results_bundle_verify.json','edge_delivery_verify.json','completion_audit.json','target_readiness.json']; "
+                "assert all(name in readme for name in required); "
+                "assert '最终一致性裁决' in readme; "
+                "assert '文件缺失、大小不符或 SHA256 不一致' in readme; "
                 "assert 'output root, `edge_results_bundle/` directory and `edge_results_bundle.tar.gz` archive' in audit; assert 'edge_target_paths_report.json' in audit; "
                 "assert 'stale bundle directories or stale tarballs are rejected' in audit; "
                 "assert 'Goal audit matrix completion' in audit; "
@@ -3342,10 +3319,10 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 "assert 'DEPLOYMENT_MEMORY_LIMIT_GB=\"${DEPLOYMENT_MEMORY_LIMIT_GB:-24}\"' in d; "
                 "assert '--deployment-memory-limit-gb \"${DEPLOYMENT_MEMORY_LIMIT_GB}\"' in d; "
                 "readme=Path('README.md').read_text(); "
-                "assert 'Direct `python -m edge_benchmark ...` invocations default to' in readme; "
+                "assert '## 9. 单独运行某个评测工具' in readme; "
                 "assert 'HF_ENDPOINT=https://hf-mirror.com' in readme; "
                 "assert 'MIN_FREE_GPU_MEMORY_GB=20' in readme; "
-                "assert 'max_memory=0:22GiB,cpu:120GiB' in readme",
+                "assert \"MAX_MEMORY='0:22GiB,cpu:120GiB'\" in readme",
             ],
         ),
         (
@@ -3378,8 +3355,9 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 sys.executable,
                 "-c",
                 "from pathlib import Path; text=Path('README.md').read_text(); "
-                "assert '--quant-bits 4' in text; "
-                "assert '--group-size 128' in text; "
+                "assert 'GPTQ | 4 | 16 | 128' in text; "
+                "assert 'AWQ | 4 | 16 | 128' in text; "
+                "assert 'OmniQuant | 4 | 16 | 128' in text; "
                 "assert 'QUANT_BITS=4' in text and 'GROUP_SIZE=128' in text",
             ],
         ),
@@ -3389,16 +3367,17 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 sys.executable,
                 "-c",
                 "from pathlib import Path; "
-                "handoff='python tools/build_edge_handoff_manifest.py --config configs/edge_4090_matrix.json --output-root /data/outputs/llmcbench_edge_4090 --output /data/outputs/llmcbench_edge_4090/edge_handoff_manifest.json'; "
-                "preflight='python tools/run_edge_preflight.py --config configs/edge_4090_matrix.json --check-hf-access --check-model-forward --finalize-dry-run --cuda-visible-devices 0 --check-optional-backend-resolution --check-quant-runtime --output /data/outputs/llmcbench_edge_4090/edge_preflight_report.json'; "
-                "prewarm='python tools/prewarm_lm_eval_tasks.py --config configs/edge_4090_matrix.json --only-model Qwen3-8B --expand-mmlu --sleep-seconds 60 --report-output /data/outputs/llmcbench_edge_4090/edge_prewarm_report.json'; "
-                "matrix='python tools/run_edge_matrix.py --config configs/edge_4090_matrix.json --stop-on-error --finalize --require-prewarm-report --require-asset-audit-report --require-non-rotational-storage --require-preflight-report --require-handoff-manifest --require-target-readiness-report --require-optional-backends-report --require-quant-runtime-report --require-target-paths-report --require-runtime-python-prefix 3.10 --require-runtime-gpu-name-contains 4090 --require-runtime-cuda-prefix 12. --require-runtime-gpu-total-memory-min-gb 23 --require-runtime-gpu-count 1 --require-runtime-cudnn --require-runtime-torch-prefix 2. --require-runtime-transformers --require-runtime-bitsandbytes --require-runtime-cpu-count-min 8 --require-runtime-system-memory-min-gb 240 --require-runtime-hf-endpoint https://hf-mirror.com --require-code-match --require-clean-worktree'; "
-                "audit='python tools/audit_edge_completion.py --config configs/edge_4090_matrix.json --root /data/outputs/llmcbench_edge_4090 --require-finalize-report --require-prewarm-report --require-asset-audit-report --require-non-rotational-storage --require-preflight-report --require-handoff-manifest --require-target-readiness-report --require-optional-backends-report --require-quant-runtime-report --require-target-paths-report --require-runtime-python-prefix 3.10 --require-runtime-gpu-name-contains 4090 --require-runtime-cuda-prefix 12. --require-runtime-gpu-total-memory-min-gb 23 --require-runtime-gpu-count 1 --require-runtime-cudnn --require-runtime-torch-prefix 2. --require-runtime-transformers --require-runtime-bitsandbytes --require-runtime-cpu-count-min 8 --require-runtime-system-memory-min-gb 240 --require-runtime-hf-endpoint https://hf-mirror.com --require-code-match --require-clean-worktree'; "
-                "texts=[Path(path).read_text() for path in ['README.md','docs/COMPLETION_AUDIT.md']]; "
-                "assert all(handoff in text and preflight in text and prewarm in text and matrix in text and audit in text and text.rindex(handoff) < text.rindex(preflight) < text.rindex(prewarm) < text.rindex(matrix) < text.rindex(audit) for text in texts); "
                 "readme=Path('README.md').read_text(); "
-                "assert 'python tools/run_edge_preflight.py --config configs/edge_4090_matrix.json --check-hf-access\\n' not in readme; "
-                "assert 'python tools/run_edge_preflight.py --config configs/edge_4090_matrix.json --check-optional-backend-resolution --allow-blocked --finalize-dry-run' not in readme",
+                "data_pos=readme.index('python scripts/prepare_4090_datasets.py'); "
+                "model_pos=readme.index('bash scripts/prepare_4090_models.sh'); "
+                "dry_run_pos=readme.index('DRY_RUN=1', model_pos); "
+                "preflight_pos=readme.index('python tools/run_edge_preflight.py'); "
+                "full_run_pos=readme.rindex('bash scripts/run_edge_4090_full.sh'); "
+                "assert data_pos < model_pos < dry_run_pos < preflight_pos < full_run_pos; "
+                "assert '.llmcbench/outputs/llmcbench_edge_4090/edge_4090_prepared_models.json' in readme; "
+                "assert '--fail-on-blocked-methods' in readme and '--fail-on-quant-runtime' in readme; "
+                "audit=Path('docs/COMPLETION_AUDIT.md').read_text(); "
+                "assert '--require-prewarm-report' in audit and '--require-target-readiness-report' in audit",
             ],
         ),
         (
@@ -3409,7 +3388,7 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 "from pathlib import Path; "
                 "required=['edge_handoff_manifest.json','edge_target_paths_report.json','edge_optional_backends_report.json','edge_quant_runtime_report.json','matrix_run_report.json','matrix_finalize_report.json','target_readiness.json','edge_scorecard.json','edge_scorecard.md','edge_results_bundle.tar.gz','edge_results_bundle/RESULTS_BUNDLE_MANIFEST.json','edge_results_bundle_verify.json','edge_delivery_verify.json']; "
                 "docs={path: Path(path).read_text() for path in ['README.md','docs/COMPLETION_AUDIT.md']}; "
-                "missing=[(path,name) for path,text in docs.items() for name in required if f'/data/outputs/llmcbench_edge_4090/{name}' not in text]; "
+                "missing=[(path,name) for path,text in docs.items() for name in required if name not in text]; "
                 "assert not missing, missing",
             ],
         ),
@@ -3656,9 +3635,10 @@ def run_checks(args: argparse.Namespace) -> Dict:
                 "assert 'torch==2.8.0' in text; "
                 "assert 'numpy>=2.2.6 transformers>=4.55.2' in text; "
                 "assert 'PYTORCH_PACKAGES' in text; "
-                "assert 'original LLMCBench scripts' in readme; "
-                "assert 'EDGE_RUNTIME_PROFILE=gptqmodel' in readme; "
-                "assert 'Python 3.10 / CUDA 12.x environment' in readme",
+                "assert 'Python 3.10' in readme; "
+                "assert 'CUDA 12.4' in readme; "
+                "assert 'constraints-cu124.txt' in readme; "
+                "assert '## 14. 旧版 LLMCBench 脚本' in readme",
             ],
         ),
         (
