@@ -71,15 +71,19 @@ def _calibration_texts(args, method: str, required: int) -> Tuple[list[str], Dic
         path = Path(calibration_file).expanduser()
         if path.is_file():
             texts = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-            if len(texts) >= required:
-                return texts[:required], {
+            enough = len(texts) >= required if method == "smoothquant" else bool(texts)
+            if enough:
+                selected = texts[:required] if method == "smoothquant" else texts
+                return selected, {
                     "calibration_source": "explicit_text_file",
                     "calibration_file": str(path),
                     "calibration_samples": required,
+                    "calibration_text_records": len(selected),
                 }
             raise RuntimeError(
-                f"Explicit adaptation calibration file {path} has only {len(texts)}/{required} "
-                "non-empty texts. Remove --calibration-file to use the configured dataset or provide full coverage."
+                f"Explicit adaptation calibration file {path} has insufficient non-empty text: "
+                f"method={method}, records={len(texts)}, required={required}. Remove --calibration-file "
+                "to use the configured dataset or provide full coverage."
             )
     try:
         from datasets import load_dataset
@@ -108,18 +112,30 @@ def _calibration_texts(args, method: str, required: int) -> Tuple[list[str], Dic
         value = record.get("text") if isinstance(record, dict) else None
         if isinstance(value, str) and value.strip():
             texts.append(value.strip())
-            if len(texts) >= required:
+            # SmoothQuant defines its calibration size in sentences. OmniQuant
+            # defines it in packed token segments, so keep the WikiText2 text
+            # stream available until the tokenizer has produced `required`
+            # full-length segments below.
+            if method == "smoothquant" and len(texts) >= required:
                 break
-    if len(texts) < required:
+    if method == "smoothquant" and len(texts) < required:
         raise RuntimeError(f"Collected only {len(texts)}/{required} usable calibration texts from {source}")
+    if not texts:
+        raise RuntimeError(f"Collected no usable calibration text from {source}")
     return texts, {
         "calibration_source": source,
         "calibration_seed": seed,
         "calibration_samples": required,
+        "calibration_text_records": len(texts),
     }
 
 
-def _packed_token_batches(tokenizer, texts: list[str], sequence_length: int) -> list[torch.Tensor]:
+def _packed_token_batches(
+    tokenizer,
+    texts: list[str],
+    sequence_length: int,
+    max_batches: int | None = None,
+) -> list[torch.Tensor]:
     token_ids: list[int] = []
     batches: list[torch.Tensor] = []
     for text in texts:
@@ -128,6 +144,8 @@ def _packed_token_batches(tokenizer, texts: list[str], sequence_length: int) -> 
             current = token_ids[:sequence_length]
             token_ids = token_ids[sequence_length:]
             batches.append(torch.tensor([current], dtype=torch.long))
+            if max_batches is not None and len(batches) >= max_batches:
+                return batches
     return batches
 
 
@@ -149,7 +167,7 @@ def _collect_activation_maxima(args, model, tokenizer, method: str) -> Tuple[Dic
             for text in texts
         ]
     else:
-        batches = _packed_token_batches(tokenizer, texts, sequence_length)
+        batches = _packed_token_batches(tokenizer, texts, sequence_length, max_batches=required)
         if len(batches) < required:
             raise RuntimeError(
                 f"WikiText2 calibration text produced only {len(batches)}/{required} packed "

@@ -1597,6 +1597,32 @@ def run_checks(args: argparse.Namespace) -> Dict:
             ],
         ),
         (
+            "omniquant_packed_calibration_segments",
+            [
+                sys.executable,
+                "-c",
+                "exec(\"import sys, types\\n"
+                "from argparse import Namespace\\n"
+                "from edge_benchmark.adapted_quantization import _calibration_texts, _packed_token_batches\\n"
+                "class FakeDataset(list):\\n"
+                "    def shuffle(self, seed): return self\\n"
+                "module=types.ModuleType('datasets')\\n"
+                "module.load_dataset=lambda *args, **kwargs: FakeDataset([{'text':'calibration text'} for _ in range(300)])\\n"
+                "sys.modules['datasets']=module\\n"
+                "args=Namespace(calibration_file='', cache_dir=None, omniquant_seed=2)\\n"
+                "omni_texts,meta=_calibration_texts(args,'omniquant',128)\\n"
+                "assert len(omni_texts)==300 and meta['calibration_text_records']==300\\n"
+                "smooth_texts,_=_calibration_texts(args,'smoothquant',128)\\n"
+                "assert len(smooth_texts)==128\\n"
+                "class Tokenizer:\\n"
+                "    def encode(self, text, add_special_tokens=False): return [1]*2048\\n"
+                "batches=_packed_token_batches(Tokenizer(),omni_texts,2048,max_batches=128)\\n"
+                "assert len(batches)==128 and all(tuple(item.shape)==(1,2048) for item in batches)\\n"
+                "text=open('scripts/prepare_4090_models.sh').read()\\n"
+                "assert '.compression-failed-' in text\")",
+            ],
+        ),
+        (
             "standalone_compression_launcher_profiles",
             [
                 sys.executable,

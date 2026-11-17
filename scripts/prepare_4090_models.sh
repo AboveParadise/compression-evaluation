@@ -276,6 +276,11 @@ compress_local() {
     echo "[ready] ${output_dir}"
     return
   fi
+  if [[ -d "${output_dir}" && "${FORCE}" != "1" ]]; then
+    local quarantine="${output_dir}.compression-failed-$(date -u +%Y%m%dT%H%M%SZ)"
+    run_cmd mv -- "${output_dir}" "${quarantine}"
+    echo "Incomplete compression output moved to ${quarantine}" >&2
+  fi
   local args=()
   while IFS= read -r -d '' item; do args+=("${item}"); done < <(compression_args "${base_model}" "${model_name}" "${method}" "${output_dir}" "${setting}")
   quote_cmd "${args[@]}"
