@@ -221,7 +221,9 @@ use that config for matrix evaluation after all asset checks pass.
 All bootstrap artifacts default to the repository-local `.llmcbench/`
 directory: the Python venv, base and compressed models, Hugging Face cache,
 dataset snapshots, prompts, calibration inputs, reports and final outputs. Set
-`LLMCBENCH_ROOT` only when an explicit external data disk is desired.
+`LLMCBENCH_ROOT` only when an explicit external data disk is desired. The
+installer defaults to a local venv; set `ENV_MANAGER=conda` explicitly if a
+Conda environment outside the repository is preferred.
 
 The aligned weight-only profile is W4 group 128 for GPTQ, AWQ and OmniQuant on
 both base models. SmoothQuant remains W8A8 on both models because W8A8 is the

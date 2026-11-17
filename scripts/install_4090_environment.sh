@@ -10,6 +10,7 @@ RUNTIME_ROOT="${LLMCBENCH_ROOT:-${PROJECT_ROOT}/.llmcbench}"
 cd "${PROJECT_ROOT}"
 
 ENV_NAME="${ENV_NAME:-llmcbench-edge}"
+ENV_MANAGER="${ENV_MANAGER:-venv}"
 PYTHON_VERSION="${PYTHON_VERSION:-3.10}"
 VENV_DIR="${VENV_DIR:-${RUNTIME_ROOT}/venv}"
 PYTORCH_INDEX_URL="${PYTORCH_INDEX_URL:-https://download.pytorch.org/whl/cu124}"
@@ -41,8 +42,11 @@ if [[ "${DRY_RUN}" == "1" ]]; then
   exit 0
 fi
 
-if [[ "${VERIFY_ONLY}" == "1" ]]; then
+if [[ "${VERIFY_ONLY}" == "1" || "${ENV_MANAGER}" == "venv" ]]; then
   CONDA_BIN=""
+elif [[ "${ENV_MANAGER}" != "conda" ]]; then
+  echo "ENV_MANAGER must be venv or conda, got: ${ENV_MANAGER}" >&2
+  exit 2
 elif command -v mamba >/dev/null 2>&1; then
   CONDA_BIN=mamba
 elif command -v conda >/dev/null 2>&1; then
