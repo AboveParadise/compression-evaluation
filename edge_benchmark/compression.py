@@ -381,27 +381,29 @@ def _prepare_decoder_calibration_inputs(
     class StopCalibrationCapture(RuntimeError):
         pass
 
-    class Catcher(nn.Module):
-        def __init__(self, module: nn.Module):
-            super().__init__()
-            self.module = module
+    def capture_first_layer_input(_module: nn.Module, args: Tuple[Any, ...], kwargs: Dict[str, Any]):
+        nonlocal captured_inputs, captured_kwargs
+        hidden_states = args[0] if args else kwargs.get("hidden_states")
+        if not isinstance(hidden_states, torch.Tensor):
+            raise RuntimeError("Could not locate the first decoder layer hidden_states input.")
+        captured_inputs = hidden_states.detach()
+        captured_kwargs = {
+            key: value.detach() if isinstance(value, torch.Tensor) else value
+            for key, value in kwargs.items()
+            if key in {"attention_mask", "position_ids", "cache_position", "position_embeddings", "use_cache"}
+        }
+        captured_kwargs["use_cache"] = False
+        raise StopCalibrationCapture
 
-        def forward(self, hidden_states: torch.Tensor, *_, **kwargs):
-            nonlocal captured_inputs, captured_kwargs
-            captured_inputs = hidden_states.detach()
-            captured_kwargs = {
-                key: value.detach() if isinstance(value, torch.Tensor) else value
-                for key, value in kwargs.items()
-                if key in {"attention_mask", "position_ids", "cache_position", "position_embeddings", "use_cache"}
-            }
-            captured_kwargs["use_cache"] = False
-            raise StopCalibrationCapture
-
-    original_first_layer = layers[0]
-    layers[0] = Catcher(original_first_layer)
+    # Keep the original decoder layer object in model.layers. Recent Qwen3
+    # Transformers code reads attributes such as `attention_type` from each
+    # layer before calling it, so replacing the layer with a wrapper breaks the
+    # model before calibration input capture can run.
+    capture_handle = layers[0].register_forward_pre_hook(capture_first_layer_input, with_kwargs=True)
     calibration_inputs = None
     try:
         for index, example in enumerate(examples):
+            captured_inputs = None
             encoded = {key: value.to(device) for key, value in example.items()}
             try:
                 model(**encoded, use_cache=False)
@@ -417,7 +419,7 @@ def _prepare_decoder_calibration_inputs(
                 )
             calibration_inputs[index].copy_(captured_inputs[0].to(buffer_device))
     finally:
-        layers[0] = original_first_layer
+        capture_handle.remove()
         model.config.use_cache = use_cache
     if calibration_inputs is None:
         raise RuntimeError("No decoder calibration inputs were captured.")

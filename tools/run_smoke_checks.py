@@ -1623,6 +1623,23 @@ def run_checks(args: argparse.Namespace) -> Dict:
             ],
         ),
         (
+            "qwen3_pruning_input_capture_preserves_layer_attributes",
+            [
+                sys.executable,
+                "-c",
+                "import torch; "
+                "from transformers import Qwen3Config,Qwen3ForCausalLM; "
+                "from edge_benchmark.compression import _prepare_decoder_calibration_inputs; "
+                "cfg=Qwen3Config(vocab_size=64,hidden_size=16,intermediate_size=32,num_hidden_layers=2,num_attention_heads=4,num_key_value_heads=2,head_dim=4,max_position_embeddings=32); "
+                "model=Qwen3ForCausalLM(cfg).eval(); "
+                "examples=[{'input_ids':torch.randint(0,64,(1,8)),'attention_mask':torch.ones((1,8),dtype=torch.long)} for _ in range(3)]; "
+                "hidden,kwargs=_prepare_decoder_calibration_inputs(model,examples,torch.device('cpu'),torch.device('cpu')); "
+                "assert tuple(hidden.shape)==(3,8,16); "
+                "assert hasattr(model.model.layers[0],'attention_type'); "
+                "assert kwargs['use_cache'] is False",
+            ],
+        ),
+        (
             "standalone_compression_launcher_profiles",
             [
                 sys.executable,
