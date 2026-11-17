@@ -3458,6 +3458,17 @@ def run_checks(args: argparse.Namespace) -> Dict:
         ),
         ("full_4090_script", ["bash", "-n", "scripts/run_edge_4090_full.sh"]),
         ("prepare_4090_models_script", ["bash", "-n", "scripts/prepare_4090_models.sh"]),
+        (
+            "prepare_4090_models_qwen3_gptq_download_only",
+            [
+                sys.executable,
+                "-c",
+                "from pathlib import Path; text=Path('scripts/prepare_4090_models.sh').read_text(); "
+                "assert 'HF_DOWNLOAD_RETRIES' in text and 'HF_DOWNLOAD_RETRY_DELAY' in text; "
+                "assert 'Qwen3 GPTQ requires the pinned precompressed W4G128 checkpoint' in text; "
+                "assert 'AutoGPTQ 0.7.1' in text and 'does not support local Qwen3 quantization' in text",
+            ],
+        ),
         ("install_4090_environment_script", ["bash", "-n", "scripts/install_4090_environment.sh"]),
         (
             "prepare_4090_datasets_cli",

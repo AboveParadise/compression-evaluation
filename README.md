@@ -709,7 +709,22 @@ python scripts/prepare_4090_datasets.py
 
 模型下载也支持重跑；完整 checkpoint 自动跳过。
 
-### 12.6 GPU 空闲显存不足
+### 12.6 Qwen3 GPTQ 报 `qwen3 isn't supported yet`
+
+这是旧脚本在 GPTQ checkpoint 下载失败后错误回退到 AutoGPTQ 0.7.1
+导致的；AutoGPTQ 0.7.1 不支持本地量化 Qwen3。更新代码后重新运行：
+
+```bash
+git pull
+source .llmcbench/venv/bin/activate
+bash scripts/prepare_4090_models.sh
+```
+
+新脚本会对固定的 Qwen3 W4G128 checkpoint 执行可续传指数退避下载。最终
+下载失败时会明确停止，不再进入错误的 AutoGPTQ 回退路径。开头出现的
+`CUDA extension not installed` 只是 AutoGPTQ 警告，不是本次错误根因。
+
+### 12.7 GPU 空闲显存不足
 
 默认要求至少 20GB 空闲显存。检查：
 
@@ -719,7 +734,7 @@ nvidia-smi
 
 关闭桌面占用、推理服务或其他 CUDA 任务后重试。不要为了绕过问题直接设置 `MIN_FREE_GPU_MEMORY_GB=0` 运行正式实验。
 
-### 12.7 24GB 上 OOM
+### 12.8 24GB 上 OOM
 
 默认配置已经使用：
 
@@ -733,7 +748,7 @@ SparseGPT/Wanda calibration buffer on CPU
 
 诊断时可临时降低 `SEQLEN` 或 `INPUT_LENGTH` 到 1024，但正式结果必须恢复锁定配置。
 
-### 12.8 AutoAWQ 弃用警告
+### 12.9 AutoAWQ 弃用警告
 
 AutoAWQ 0.2.9 会打印项目弃用警告，但已锁定在当前兼容栈中。最终是否可用由一 token 生成 probe 和完整量化 runtime preflight 决定，不以 import 成功代替运行验证。
 

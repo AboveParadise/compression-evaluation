@@ -31,6 +31,8 @@ DRY_RUN="${DRY_RUN:-0}"
 VERIFY_ONLY="${VERIFY_ONLY:-0}"
 FORCE="${FORCE:-0}"
 ALLOW_LOCAL_QUANT_FALLBACK="${ALLOW_LOCAL_QUANT_FALLBACK:-1}"
+HF_DOWNLOAD_RETRIES="${HF_DOWNLOAD_RETRIES:-8}"
+HF_DOWNLOAD_RETRY_DELAY="${HF_DOWNLOAD_RETRY_DELAY:-30}"
 
 LLAMA_BASE_REPO="${LLAMA_BASE_REPO:-LLM-Research/Meta-Llama-3-8B}"
 LLAMA_BASE_REVISION="${LLAMA_BASE_REVISION:-master}"
@@ -223,16 +225,35 @@ download_hf() {
   fi
   local hf_bin
   hf_bin="$(hf_download_command)"
-  if [[ "${hf_bin}" == "hf" ]]; then
-    if ! run_cmd hf download "${repo}" --revision "${revision}" --local-dir "${output_dir}" --max-workers 2; then
-      return 1
+  local attempt
+  for attempt in $(seq 1 "${HF_DOWNLOAD_RETRIES}"); do
+    echo "[download] ${repo} attempt ${attempt}/${HF_DOWNLOAD_RETRIES}"
+    if [[ "${hf_bin}" == "hf" ]]; then
+      if run_cmd hf download "${repo}" --revision "${revision}" --local-dir "${output_dir}" --max-workers 2; then
+        write_precompressed_marker "${output_dir}" "${model_name}" "${method}" "${repo}" "${revision}"
+        return
+      fi
+    else
+      if run_cmd huggingface-cli download "${repo}" --revision "${revision}" --local-dir "${output_dir}" --max-workers 2; then
+        write_precompressed_marker "${output_dir}" "${model_name}" "${method}" "${repo}" "${revision}"
+        return
+      fi
     fi
-  else
-    if ! run_cmd huggingface-cli download "${repo}" --revision "${revision}" --local-dir "${output_dir}" --max-workers 2; then
-      return 1
+    if checkpoint_ready "${output_dir}" 2>/dev/null; then
+      write_precompressed_marker "${output_dir}" "${model_name}" "${method}" "${repo}" "${revision}"
+      return
     fi
-  fi
-  write_precompressed_marker "${output_dir}" "${model_name}" "${method}" "${repo}" "${revision}"
+    if [[ "${DRY_RUN}" == "1" ]]; then
+      return
+    fi
+    if [[ "${attempt}" -lt "${HF_DOWNLOAD_RETRIES}" ]]; then
+      local delay=$((HF_DOWNLOAD_RETRY_DELAY * (2 ** (attempt - 1))))
+      if [[ "${delay}" -gt 300 ]]; then delay=300; fi
+      echo "[retry] ${repo} after ${delay}s" >&2
+      sleep "${delay}"
+    fi
+  done
+  return 1
 }
 
 compression_args() {
@@ -345,6 +366,11 @@ download_or_compress() {
       local quarantine="${output_dir}.download-failed-$(date -u +%Y%m%dT%H%M%SZ)"
       run_cmd mv -- "${output_dir}" "${quarantine}"
       echo "Incomplete download moved to ${quarantine}" >&2
+    fi
+    if [[ "${model_name}" == "Qwen3-8B" && "${method}" == "gptq" ]]; then
+      echo "Qwen3 GPTQ requires the pinned precompressed W4G128 checkpoint; AutoGPTQ 0.7.1 " >&2
+      echo "does not support local Qwen3 quantization. Fix network access and rerun; the HF download resumes." >&2
+      return 1
     fi
     echo "Download failed for ${model_name}/${method}; trying local compression." >&2
     compress_download_fallback "${base_model}" "${model_name}" "${method}" "${output_dir}"
