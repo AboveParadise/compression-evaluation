@@ -1,0 +1,6 @@
+bitsandbytes==0.50.1
+optimum<2
+auto-gptq==0.7.1
+peft==0.10.0
+autoawq==0.2.9
+compressed-tensors==0.15.0.1

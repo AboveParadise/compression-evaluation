@@ -1,0 +1,190 @@
+{
+  "models": [
+    {
+      "name": "LLaMA3-8B",
+      "path": "/data/models/Meta-Llama-3-8B",
+      "repository": "meta-llama/Meta-Llama-3-8B",
+      "revision": "8cde5ca8380496c9a6cc7ef3a8b46a0372a1d920",
+      "attestation_file": ".llmcbench_base_model_attestation.json"
+    },
+    {
+      "name": "Qwen3-8B",
+      "path": "/data/models/Qwen3-8B",
+      "repository": "Qwen/Qwen3-8B",
+      "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+      "attestation_file": ".llmcbench_base_model_attestation.json"
+    }
+  ],
+  "methods": [
+    "dense",
+    "wanda",
+    "sparsegpt",
+    "gptq",
+    "awq",
+    "smoothquant",
+    "omniquant"
+  ],
+  "require_paper_protocol_validation": true,
+  "defaults": {
+    "hf_endpoint": "https://hf-mirror.com",
+    "hf_cache_dir": "/data/hf_cache",
+    "data_dir": "/data/llm_eval_datasets",
+    "revision": null,
+    "calibration_file": "/data/calibration/wiki_samples.txt",
+    "prompt_file": "/data/prompts/edge_prompts.txt",
+    "output_root": "/data/outputs/llmcbench_paper_aligned_4090",
+    "cuda_visible_devices": "1",
+    "seqlen": 2048,
+    "calibration_samples": 128,
+    "calibration_batch_size": 1,
+    "pruning_calibration_source": "c4",
+    "calibration_seed": 0,
+    "calibration_dataset": "allenai/c4",
+    "calibration_dataset_config": "allenai--c4",
+    "calibration_c4_data_file": "en/c4-train.00000-of-01024.json.gz",
+    "calibration_c4_revision": "1588ec454efa1a09f29cd18ddd04fe05fc8653a2",
+    "calibration_dataset_cache": "/data/llm_eval_datasets",
+    "sparsity": 0.5,
+    "prune_pattern": "unstructured",
+    "prune_lm_head": false,
+    "sparsegpt_blocksize": 128,
+    "sparsegpt_percdamp": 0.01,
+    "pruning_buffer_device": "cpu",
+    "quant_bits": 4,
+    "group_size": -1,
+    "desc_act": true,
+    "gptq_calibration_source": "c4",
+    "gptq_damp_percent": 0.01,
+    "gptq_true_sequential": true,
+    "gptq_static_groups": false,
+    "gptq_asymmetric": true,
+    "awq_version": "GEMM",
+    "awq_calibration_source": "pileval",
+    "awq_calibration_seed": 42,
+    "awq_calibration_samples": 128,
+    "awq_calibration_seqlen": 512,
+    "awq_grid_size": 20,
+    "smoothquant_alpha": null,
+    "smoothquant_alpha_selection": "official_grid_search",
+    "smoothquant_calibration_source": "pile_validation",
+    "smoothquant_calibration_sentences": 512,
+    "smoothquant_official_code_dir": "${LLMCBENCH_SMOOTHQUANT_DIR:-}",
+    "smoothquant_official_repository": "https://github.com/mit-han-lab/smoothquant",
+    "smoothquant_official_commit": "c61476d728e42ae0d8a35e7e78494edcac3237b5",
+    "omniquant_abits": 16,
+    "omniquant_epochs": 20,
+    "omniquant_nsamples": 128,
+    "omniquant_seqlen": 2048,
+    "omniquant_seed": 2,
+    "omniquant_calibration_source": "wikitext2",
+    "omniquant_lwc": true,
+    "omniquant_let": false,
+    "omniquant_aug_loss": false,
+    "omniquant_official_code_dir": "${LLMCBENCH_OMNIQUANT_DIR:-}",
+    "omniquant_official_repository": "https://github.com/OpenGVLab/OmniQuant",
+    "omniquant_official_commit": "feffe8ea87d80f7bb57b6e25e7cff9dc950fcc14",
+    "strict_model_recipe_available": true,
+    "strict_model_recipe_reason": "",
+    "paper_protocol": "",
+    "require_paper_protocol_attestation": false,
+    "min_free_gpu_memory_gb": 20,
+    "device_map": "auto",
+    "dtype": "fp16",
+    "attn_implementation": "",
+    "max_memory": "0:22GiB,cpu:120GiB",
+    "tasks": "mmlu,arc_challenge,hellaswag,piqa,winogrande",
+    "split_accuracy_tasks": true,
+    "continue_on_accuracy_error": true,
+    "batch_size": "1",
+    "num_fewshot": null,
+    "accuracy_limit": null,
+    "input_length": 2048,
+    "max_new_tokens": 128,
+    "deployment_batch_size": 1,
+    "sparsity_sample_tensors": -1,
+    "deployment_memory_limit_gb": 24,
+    "warmup": 1,
+    "repeat": 3
+  },
+  "external_commands": {
+    "smoothquant": "",
+    "omniquant": ""
+  },
+  "precompressed_paths": {},
+  "method_overrides": {
+    "dense": {
+      "paper_protocol": "dense_fp16_same_checkpoint_baseline",
+      "require_paper_protocol_attestation": true
+    },
+    "wanda": {
+      "paper_protocol": "wanda_iclr2024_c4_128x2048_seed0_unstructured50",
+      "require_paper_protocol_attestation": true
+    },
+    "sparsegpt": {
+      "paper_protocol": "sparsegpt_icml2023_c4_128x2048_seed0_unstructured50_block128_damp001",
+      "require_paper_protocol_attestation": true
+    },
+    "gptq": {
+      "paper_protocol": "gptq_for_llama_c4_w4_asymmetric_actorder_true_sequential",
+      "require_paper_protocol_attestation": true,
+      "quant_bits": 4,
+      "group_size": -1,
+      "desc_act": true,
+      "gptq_damp_percent": 0.01,
+      "gptq_true_sequential": true,
+      "gptq_static_groups": false,
+      "gptq_asymmetric": true
+    },
+    "awq": {
+      "paper_protocol": "awq_mlsys2024_pile_w4_g128_grid20",
+      "require_paper_protocol_attestation": true,
+      "quant_bits": 4,
+      "group_size": 128,
+      "awq_calibration_source": "pileval",
+      "awq_calibration_seed": 42,
+      "awq_calibration_samples": 128,
+      "awq_calibration_seqlen": 512,
+      "awq_grid_size": 20
+    },
+    "smoothquant": {
+      "paper_protocol": "smoothquant_w8a8_pile_validation_512_sentences_alpha_model_specific",
+      "require_paper_protocol_attestation": true,
+      "quant_bits": 8,
+      "python_bin": "${LLMCBENCH_SMOOTHQUANT_PYTHON:-python3}",
+      "runtime_profile": "smoothquant"
+    },
+    "omniquant": {
+      "paper_protocol": "omniquant_w4a16_wikitext2_128x2048_epochs20_lwc",
+      "require_paper_protocol_attestation": true,
+      "quant_bits": 4,
+      "group_size": -1,
+      "omniquant_abits": 16,
+      "omniquant_epochs": 20,
+      "omniquant_nsamples": 128,
+      "omniquant_seqlen": 2048,
+      "omniquant_seed": 2,
+      "omniquant_lwc": true,
+      "omniquant_let": false,
+      "omniquant_aug_loss": false
+    }
+  },
+  "model_overrides": {},
+  "model_method_overrides": {
+    "LLaMA3-8B/smoothquant": {
+      "strict_model_recipe_available": false,
+      "strict_model_recipe_reason": "Pinned official SmoothQuant repository has no LLaMA3-8B target-model recipe/export with calibration provenance and alpha."
+    },
+    "Qwen3-8B/smoothquant": {
+      "strict_model_recipe_available": false,
+      "strict_model_recipe_reason": "Pinned official SmoothQuant repository has no Qwen3-8B target-model recipe/export with calibration provenance and alpha."
+    },
+    "LLaMA3-8B/omniquant": {
+      "strict_model_recipe_available": false,
+      "strict_model_recipe_reason": "Pinned official OmniQuant repository has no LLaMA3-8B target-model script or export recipe."
+    },
+    "Qwen3-8B/omniquant": {
+      "strict_model_recipe_available": false,
+      "strict_model_recipe_reason": "Pinned official OmniQuant repository has no Qwen3-8B target-model script or export recipe."
+    }
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "scope": "Compression algorithm settings only. LLaMA3-8B and Qwen3-8B were not present in every original paper; those rows are official-implementation setting transfers, not same-model paper reproductions.",
+  "protocols": {
+    "dense_fp16_same_checkpoint_baseline": {
+      "method": "dense",
+      "source": "LLMCBench evaluation control",
+      "model_coverage": "same released base checkpoint as the compressed row",
+      "compression": {
+        "weight_format": "FP16/BF16 source checkpoint as released",
+        "compression": "none"
+      },
+      "note": "This is the uncompressed control, not a compression-paper setting. It must use the exact source checkpoint, revision and evaluation protocol paired with each compressed row."
+    },
+    "wanda_iclr2024_c4_128x2048_seed0_unstructured50": {
+      "method": "wanda",
+      "source": "https://github.com/locuslab/wanda",
+      "model_coverage": "official algorithm setting transfer to LLaMA3-8B/Qwen3-8B",
+      "calibration": {
+        "dataset": "allenai/c4",
+        "config": "allenai--c4",
+        "training_shard": "en/c4-train.00000-of-01024.json.gz",
+        "seed": 0,
+        "samples": 128,
+        "sequence_length": 2048
+      },
+      "compression": {
+        "sparsity": 0.5,
+        "pattern": "unstructured",
+        "activation_metric": "abs(weight) * sqrt(mean(input^2))"
+      }
+    },
+    "sparsegpt_icml2023_c4_128x2048_seed0_unstructured50_block128_damp001": {
+      "method": "sparsegpt",
+      "source": "https://github.com/locuslab/wanda",
+      "model_coverage": "official algorithm setting transfer to LLaMA3-8B/Qwen3-8B",
+      "calibration": {
+        "dataset": "allenai/c4",
+        "config": "allenai--c4",
+        "training_shard": "en/c4-train.00000-of-01024.json.gz",
+        "seed": 0,
+        "samples": 128,
+        "sequence_length": 2048
+      },
+      "compression": {
+        "sparsity": 0.5,
+        "pattern": "unstructured",
+        "blocksize": 128,
+        "percdamp": 0.01,
+        "algorithm": "full input Hessian, Cholesky inverse, blockwise error compensation"
+      }
+    },
+    "gptq_for_llama_c4_w4_asymmetric_actorder_true_sequential": {
+      "method": "gptq",
+      "source": "https://github.com/IST-DASLab/gptq",
+      "model_coverage": "official GPTQ-for-LLaMA setting transfer to LLaMA3-8B/Qwen3-8B",
+      "calibration": {
+        "dataset": "c4",
+        "samples": 128,
+        "sequence_length": 2048,
+        "seed": 0
+      },
+      "compression": {
+        "weight_bits": 4,
+        "group_size": -1,
+        "symmetric": false,
+        "act_order": true,
+        "true_sequential": true,
+        "damp_percent": 0.01
+      },
+      "note": "The original GPTQ paper covered OPT/BLOOM; GPTQ-for-LLaMA supplies the LLaMA command with C4, W4, act-order and true-sequential. Its --sym flag is opt-in and the documented W4 command does not enable it, so this strict profile uses the official asymmetric default. The official script's data loader uses 128 random 2048-token C4 windows with seed 0."
+    },
+    "awq_mlsys2024_pile_w4_g128_grid20": {
+      "method": "awq",
+      "source": "https://github.com/mit-han-lab/llm-awq",
+      "official_implementation": {
+        "repository": "https://github.com/mit-han-lab/llm-awq",
+        "commit": "d6e797a42b9ef7778de8ee2352116e0f48a78d61"
+      },
+      "model_coverage": "The pinned official LLM-AWQ README gives a LLaMA3-8B W4g128 command. Qwen3-8B is not named by that recipe, so its row is an official-setting transfer and not a same-model paper reproduction.",
+      "calibration": {
+        "dataset": "Pile",
+        "reference_runtime_dataset": "mit-han-lab/pile-val-backup validation",
+        "reference_runtime_seed": 42,
+        "reference_runtime_samples": 128,
+        "reference_runtime_sequence_length": 512
+      },
+      "compression": {
+        "weight_bits": 4,
+        "group_size": 128,
+        "alpha_grid_size": 20,
+        "zero_point": true
+      },
+      "note": "The pinned LLM-AWQ entrypoint calls run_awq with pileval, 128 samples and sequence length 512; its LLaMA3-8B README command uses W4 and group size 128 with zero-point enabled by default. LLMCBench realizes the same settings through AutoAWQ and verifies its actual pileval shuffle seed (42) and scale-search grid (20) before a strict run. Qwen3-8B remains an explicitly labelled setting transfer."
+    },
+    "smoothquant_w8a8_pile_validation_512_sentences_alpha_model_specific": {
+      "method": "smoothquant",
+      "source": "https://github.com/mit-han-lab/smoothquant",
+      "official_implementation": {
+        "repository": "https://github.com/mit-han-lab/smoothquant",
+        "commit": "c61476d728e42ae0d8a35e7e78494edcac3237b5"
+      },
+      "model_coverage": "The pinned official repository does not provide a LLaMA3-8B or Qwen3-8B model recipe/export. Strict target-model rows are blocked rather than treating an algorithm transfer or third-party recipe as an original-paper setting.",
+      "target_model_recipe": {
+        "LLaMA3-8B": {
+          "available": false,
+          "reason": "Pinned official repository exposes OPT-focused export_int8_model.py and no LLaMA3-8B recipe with calibration provenance and alpha."
+        },
+        "Qwen3-8B": {
+          "available": false,
+          "reason": "Pinned official repository provides no Qwen3-8B recipe, calibration provenance or alpha."
+        }
+      },
+      "calibration": {
+        "dataset": "Pile validation",
+        "sentences": 512
+      },
+      "compression": {
+        "weight_bits": 8,
+        "activation_bits": 8,
+        "alpha": "model-specific official recipe/grid-search result"
+      },
+      "note": "This record preserves the paper-level W8A8/Pile/512-sentence setting but cannot authorize either requested target model until an official target-model recipe is published."
+    },
+    "omniquant_w4a16_wikitext2_128x2048_epochs20_lwc": {
+      "method": "omniquant",
+      "source": "https://github.com/OpenGVLab/OmniQuant",
+      "official_implementation": {
+        "repository": "https://github.com/OpenGVLab/OmniQuant",
+        "commit": "feffe8ea87d80f7bb57b6e25e7cff9dc950fcc14"
+      },
+      "model_coverage": "The pinned official repository has LLaMA/LLaMA-2/OPT/Falcon/Mixtral scripts but no LLaMA3-8B or Qwen3-8B target-model recipe. Strict target-model rows are blocked.",
+      "target_model_recipe": {
+        "LLaMA3-8B": {
+          "available": false,
+          "reason": "Pinned official repository contains no LLaMA3-8B script or export recipe."
+        },
+        "Qwen3-8B": {
+          "available": false,
+          "reason": "Pinned official repository contains no Qwen3-8B script or export recipe."
+        }
+      },
+      "calibration": {
+        "dataset": "WikiText2",
+        "segments": 128,
+        "sequence_length": 2048,
+        "seed": 2
+      },
+      "compression": {
+        "weight_bits": 4,
+        "activation_bits": 16,
+        "epochs": 20,
+        "lwc": true,
+        "let": false,
+        "group_size": "per-channel unless a g128 variant is explicitly selected"
+      },
+      "note": "The paper's W4A16 result uses 20 epochs. Group size is left per-channel for the base W4A16 profile; use a distinct protocol for W4A16g128. This does not establish a target-model recipe for LLaMA3-8B or Qwen3-8B."
+    }
+  }
+}

@@ -1,0 +1,5 @@
+"""Edge-side benchmark tools for compressed LLM checkpoints."""
+
+__all__ = ["__version__"]
+
+__version__ = "0.1.0"

@@ -1,0 +1,104 @@
+{
+  "models": [
+    {
+      "name": "LLaMA3-8B",
+      "path": "/opt/tiger/models/Meta-Llama-3-8B"
+    },
+    {
+      "name": "Qwen3-8B",
+      "path": "/opt/tiger/models/Qwen3-8B"
+    }
+  ],
+  "methods": [
+    "dense",
+    "wanda",
+    "sparsegpt",
+    "gptq",
+    "awq",
+    "smoothquant",
+    "omniquant"
+  ],
+  "defaults": {
+    "hf_endpoint": "https://hf-mirror.com",
+    "hf_cache_dir": "/opt/tiger/hf_cache",
+    "data_dir": "/opt/tiger/llm_eval_datasets",
+    "revision": null,
+    "calibration_file": "/opt/tiger/llmcbench_assets/calibration/wiki_samples.txt",
+    "prompt_file": "/opt/tiger/llmcbench_assets/prompts/edge_prompts.txt",
+    "output_root": "/opt/tiger/llmcbench_outputs/llmcbench_edge_local",
+    "cuda_visible_devices": "0",
+    "seqlen": 2048,
+    "calibration_samples": 128,
+    "calibration_batch_size": 1,
+    "pruning_calibration_source": "c4",
+    "calibration_seed": 0,
+    "calibration_dataset": "allenai/c4",
+    "calibration_dataset_config": "allenai--c4",
+    "calibration_c4_data_file": "en/c4-train.00000-of-01024.json.gz",
+    "calibration_c4_revision": "1588ec454efa1a09f29cd18ddd04fe05fc8653a2",
+    "calibration_dataset_cache": "/data/llm_eval_datasets",
+    "sparsity": 0.5,
+    "prune_pattern": "unstructured",
+    "prune_lm_head": false,
+    "sparsegpt_blocksize": 128,
+    "sparsegpt_percdamp": 0.01,
+    "pruning_buffer_device": "cpu",
+    "quant_bits": 4,
+    "group_size": 128,
+    "desc_act": false,
+    "awq_version": "GEMM",
+    "min_free_gpu_memory_gb": 20,
+    "device_map": "auto",
+    "dtype": "fp16",
+    "attn_implementation": "",
+    "max_memory": "",
+    "tasks": "mmlu,arc_challenge,hellaswag,piqa,winogrande",
+    "split_accuracy_tasks": true,
+    "continue_on_accuracy_error": true,
+    "batch_size": "1",
+    "num_fewshot": null,
+    "accuracy_limit": null,
+    "input_length": 2048,
+    "max_new_tokens": 128,
+    "deployment_batch_size": 1,
+    "sparsity_sample_tensors": -1,
+    "deployment_memory_limit_gb": 0,
+    "warmup": 1,
+    "repeat": 3
+  },
+  "external_commands": {
+    "smoothquant": "",
+    "omniquant": ""
+  },
+  "precompressed_paths": {
+    "LLaMA3-8B": {
+      "gptq": "/opt/tiger/llmcbench_outputs/llama3_precompressed/LLaMA3-8B-GPTQ-W4G64",
+      "awq": "/opt/tiger/llmcbench_outputs/llama3_precompressed/LLaMA3-8B-AWQ",
+      "smoothquant": "/opt/tiger/llmcbench_outputs/llama3_precompressed/LLaMA3-8B-SmoothQuant-W8A8",
+      "omniquant": "/opt/tiger/llmcbench_outputs/llama3_precompressed/LLaMA3-8B-OmniQuant"
+    },
+    "Qwen3-8B": {
+      "gptq": "/opt/tiger/llmcbench_outputs/qwen3_precompressed/Qwen3-8B-GPTQ-Int4",
+      "awq": "/opt/tiger/llmcbench_outputs/qwen3_precompressed/Qwen3-8B-AWQ",
+      "smoothquant": "/opt/tiger/llmcbench_outputs/qwen3_precompressed/Qwen3-8B-SmoothQuant-W8A8",
+      "omniquant": "/opt/tiger/llmcbench_outputs/qwen3_precompressed/Qwen3-8B-OmniQuant-4bit"
+    }
+  },
+  "method_overrides": {
+    "wanda": {
+      "sparsity": 0.5,
+      "prune_pattern": "unstructured"
+    },
+    "sparsegpt": {
+      "sparsity": 0.5,
+      "prune_pattern": "unstructured"
+    },
+    "smoothquant": {
+      "quant_bits": 8,
+      "python_bin": "${LLMCBENCH_SMOOTHQUANT_PYTHON:-python3}",
+      "runtime_profile": "smoothquant"
+    }
+  },
+  "model_overrides": {},
+  "model_method_overrides": {}
+}
